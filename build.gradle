@@ -1,0 +1,57 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
+}
+
+group = 'org.interactiverobotics'
+version = '1.0-SNAPSHOT'
+
+mainClassName = 'org.interactiverobotics.flink_word_counter.Main'
+
+repositories {
+    mavenCentral()
+    maven {
+        url "https://repository.apache.org/content/repositories/snapshots"
+        mavenContent {
+            snapshotsOnly()
+        }
+    }
+}
+
+configurations {
+    flinkShadowJar
+    flinkShadowJar.exclude group: 'org.apache.flink', module: 'force-shading'
+}
+
+dependencies {
+    implementation group: 'org.apache.flink', name: 'flink-java', version: '1.18.0'
+    implementation group: 'org.apache.flink', name: 'flink-streaming-java', version: '1.18.0'
+    implementation group: 'org.apache.flink', name: 'flink-connector-files', version: '1.18.0'
+
+    testImplementation platform('org.junit:junit-bom:5.9.1')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+sourceSets {
+    main.compileClasspath += configurations.flinkShadowJar
+    main.runtimeClasspath += configurations.flinkShadowJar
+    test.compileClasspath += configurations.flinkShadowJar
+    test.runtimeClasspath += configurations.flinkShadowJar
+    javadoc.classpath += configurations.flinkShadowJar
+}
+run.classpath = sourceSets.main.runtimeClasspath
+
+jar {
+    manifest {
+        attributes 'Built-By': System.getProperty('user.name'), 'Build-Jdk': System.getProperty('java.version')
+    }
+}
+
+shadowJar {
+    configurations = [project.configurations.flinkShadowJar]
+}
+
+test {
+    useJUnitPlatform()
+}
